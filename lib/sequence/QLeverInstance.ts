@@ -62,6 +62,7 @@ export class QLeverInstance {
       });
 
       if (!response.ok) {
+        console.error(`Error response: ${await response.json()}`);
         throw new Error(`QLever HTTP Error: ${response.status} ${response.statusText}`);
       }
 
