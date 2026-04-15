@@ -63,7 +63,10 @@ export class QLeverInstance {
 
       if (!response.ok) {
         console.error(`Error response: ${await response.json()}`);
-        throw new Error(`QLever HTTP Error: ${response.status} ${response.statusText}`);
+        return {
+          message: 'TIMEOUT',
+          results: [],
+        }
       }
 
       const jsonResult = await response.json();
