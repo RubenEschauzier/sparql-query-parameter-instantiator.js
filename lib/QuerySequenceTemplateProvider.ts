@@ -260,4 +260,5 @@ export interface ITargetTriplePatternVariable
 export interface ITargetTriplePatternTerm {
   value: string;
   termType: 'variable' | 'literal' | 'namedNode';
+  datatype?: string;
 }

@@ -24,12 +24,14 @@ describe('countTriplePatternsPerOperator', () => {
       parsedQuery,
       { s: [ DF.namedNode('ex:s1') ]},
       {},
+      {},
+      {},
       rng,
       2,
       6,
     );
 
-    const syntaxTreeQuery: SelectQuery = template.instantiateSyntaxTree(parsedQuery, singleVariableMapping);
+    const syntaxTreeQuery: SelectQuery = template.instantiateSyntaxTreeWrap(parsedQuery, singleVariableMapping);
     expect(extractTriplePatternsPerOperator(syntaxTreeQuery.where!))
       .toEqual({ bgp: [[{
         subject: DF.namedNode('ex:s1'),
@@ -49,12 +51,14 @@ describe('countTriplePatternsPerOperator', () => {
       parsedQuery,
       { s: [ DF.namedNode('ex:s1') ]},
       {},
+      {},
+      {},
       rng,
       2,
       6,
     );
 
-    const syntaxTreeQuery: SelectQuery = template.instantiateSyntaxTree(parsedQuery, singleVariableMapping);
+    const syntaxTreeQuery: SelectQuery = template.instantiateSyntaxTreeWrap(parsedQuery, singleVariableMapping);
     expect(extractTriplePatternsPerOperator(syntaxTreeQuery.where!))
       .toEqual({
         bgp: [[
@@ -93,12 +97,14 @@ describe('countTriplePatternsPerOperator', () => {
       parsedQuery,
       { s: [ DF.namedNode('ex:s1') ]},
       {},
+      {},
+      {},
       rng,
       2,
       6,
     );
 
-    const syntaxTreeQuery: SelectQuery = template.instantiateSyntaxTree(parsedQuery, singleVariableMapping);
+    const syntaxTreeQuery: SelectQuery = template.instantiateSyntaxTreeWrap(parsedQuery, singleVariableMapping);
     expect(extractTriplePatternsPerOperator(syntaxTreeQuery.where!))
       .toEqual({
         union: [
@@ -141,12 +147,14 @@ describe('countTriplePatternsPerOperator', () => {
       parsedQuery,
       { s: [ DF.namedNode('ex:s1') ]},
       {},
+      {},
+      {},
       rng,
       2,
       6,
     );
 
-    const syntaxTreeQuery: SelectQuery = template.instantiateSyntaxTree(parsedQuery, singleVariableMapping);
+    const syntaxTreeQuery: SelectQuery = template.instantiateSyntaxTreeWrap(parsedQuery, singleVariableMapping);
     expect(extractTriplePatternsPerOperator(syntaxTreeQuery.where!))
       .toEqual(
         {
@@ -187,12 +195,14 @@ describe('countTriplePatternsPerOperator', () => {
       parsedQuery,
       { s: [ DF.namedNode('ex:s1') ]},
       {},
+      {},
+      {},
       rng,
       2,
       6,
     );
 
-    const syntaxTreeQuery: SelectQuery = template.instantiateSyntaxTree(parsedQuery, singleVariableMapping);
+    const syntaxTreeQuery: SelectQuery = template.instantiateSyntaxTreeWrap(parsedQuery, singleVariableMapping);
     expect(extractTriplePatternsPerOperator(syntaxTreeQuery.where!)).toEqual(
       {
         union: [[
@@ -226,12 +236,14 @@ describe('countTriplePatternsPerOperator', () => {
       parsedQuery,
       { s: [ DF.namedNode('ex:s1') ]},
       {},
+      {},
+      {},
       rng,
       2,
       6,
     );
 
-    const syntaxTreeQuery: SelectQuery = template.instantiateSyntaxTree(parsedQuery, singleVariableMapping);
+    const syntaxTreeQuery: SelectQuery = template.instantiateSyntaxTreeWrap(parsedQuery, singleVariableMapping);
     expect(extractTriplePatternsPerOperator(syntaxTreeQuery.where!)).toEqual(
       {
         bgp: [[
@@ -261,12 +273,14 @@ describe('countTriplePatternsPerOperator', () => {
       parsedQuery,
       { s: [ DF.namedNode('ex:s1') ]},
       {},
+      {},
+      {},
       rng,
       2,
       6,
     );
 
-    const syntaxTreeQuery: SelectQuery = template.instantiateSyntaxTree(parsedQuery, singleVariableMapping);
+    const syntaxTreeQuery: SelectQuery = template.instantiateSyntaxTreeWrap(parsedQuery, singleVariableMapping);
     expect(extractTriplePatternsPerOperator(syntaxTreeQuery.where!)).toEqual(
       {
         bgp: [
@@ -308,12 +322,14 @@ describe('countTriplePatternsPerOperator', () => {
       parsedQuery,
       { s: [ DF.namedNode('ex:s1') ]},
       {},
+      {},
+      {},
       rng,
       2,
       6,
     );
 
-    const syntaxTreeQuery: SelectQuery = template.instantiateSyntaxTree(parsedQuery, singleVariableMapping);
+    const syntaxTreeQuery: SelectQuery = template.instantiateSyntaxTreeWrap(parsedQuery, singleVariableMapping);
     expect(extractTriplePatternsPerOperator(syntaxTreeQuery.where!))
       .toEqual(
         {
@@ -344,12 +360,14 @@ describe('countTriplePatternsPerOperator', () => {
       parsedQuery,
       { s: [ DF.namedNode('ex:s1') ]},
       {},
+      {},
+      {},
       rng,
       2,
       6,
     );
 
-    const syntaxTreeQuery: SelectQuery = template.instantiateSyntaxTree(parsedQuery, singleVariableMapping);
+    const syntaxTreeQuery: SelectQuery = template.instantiateSyntaxTreeWrap(parsedQuery, singleVariableMapping);
     expect(extractTriplePatternsPerOperator(syntaxTreeQuery.where!)).toEqual({});
   });
 });

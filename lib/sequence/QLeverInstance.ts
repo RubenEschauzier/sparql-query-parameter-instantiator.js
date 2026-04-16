@@ -5,7 +5,9 @@ import * as path from 'node:path';
 import { BindingsFactory } from '@comunica/utils-bindings-factory';
 import type * as RDF from '@rdfjs/types';
 import * as yaml from 'js-yaml';
+import type { Logger } from 'pino';
 import { DataFactory } from 'rdf-data-factory';
+import { logger } from '../logging/logger';
 import type { IQueryExecutionResult } from './QueryNextInstantiationValue';
 
 const DF = new DataFactory();
@@ -20,6 +22,7 @@ export class QLeverInstance {
 
   private runDir: string | null = null;
   private isShuttingDown = false;
+  private readonly log: Logger;
 
   private readonly ready: Promise<void>;
 
@@ -28,6 +31,7 @@ export class QLeverInstance {
     this.dataLocations = args.dataLocations;
     this.port = args.port;
     this.timeout = args.timeout;
+    this.log = logger.child({ module: 'QLeverInstance' });
 
     // Generate unique identifiers to isolate this instance
     const id = Date.now().toString().slice(-6);
@@ -37,7 +41,7 @@ export class QLeverInstance {
 
     // Start the background setup
     this.ready = this.start().catch((err) => {
-      console.error(`[QLever] Fatal startup error:`, err);
+      this.log.error({ err }, '[QLever] Fatal startup error');
       // Clean up if we failed halfway through
       this.stop().catch(() => {});
       throw err;
@@ -211,17 +215,17 @@ ACCESS_TOKEN = test
       try {
         await this.runCommand('docker', [ 'rm', '-f', `qlever-${this.port}` ], this.runDir);
       } catch {}
-      console.log('[QLever] Starting Docker Compose...');
+      this.log.info('[QLever] Starting Docker Compose...');
 
       // We do NOT use -d (detached) here if we want to pipe logs to the main process,
       // but usually -d is better for stability, so we keep -d and just wait.
       await this.runCommand('docker', [ 'compose', 'up', '-d' ], this.runDir);
 
-      console.log('[QLever] Waiting for server to accept connections...');
+      this.log.info('[QLever] Waiting for server to accept connections...');
       await this.waitForHealthy();
-      console.log(`[QLever] Ready at http://localhost:${this.port}`);
+      this.log.info(`[QLever] Ready at http://localhost:${this.port}`);
     } catch (error) {
-      console.error('[QLever] Startup failed. Cleaning up...');
+      this.log.error({ error }, '[QLever] Startup failed. Cleaning up...');
       await this.stop();
       throw error;
     }
@@ -236,7 +240,7 @@ ACCESS_TOKEN = test
     }
     this.isShuttingDown = true;
 
-    console.log('[QLever] Shutting down...');
+    this.log.info('[QLever] Shutting down...');
 
     try {
       // 1. Stop Docker Compose
@@ -245,9 +249,9 @@ ACCESS_TOKEN = test
 
       // Cleanup Temp Files
       fs.rmSync(this.runDir, { recursive: true, force: true });
-      console.log('[QLever] Shutdown complete.');
+      this.log.info('[QLever] Shutdown complete.');
     } catch (e) {
-      console.error('[QLever] Error during shutdown:', e);
+      this.log.error({ e }, '[QLever] Error during shutdown');
     } finally {
       this.runDir = null;
       // Remove listeners so they don't fire again if the process continues

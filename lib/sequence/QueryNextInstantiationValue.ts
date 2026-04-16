@@ -1,7 +1,9 @@
 import type * as RDF from '@rdfjs/types';
+import type { Logger } from 'pino';
 import { DataFactory } from 'rdf-data-factory';
 import type { SelectQuery, SparqlQuery, VariableTerm, IriTerm, BlankTerm, QuadTerm, PropertyPath, Variable } from 'sparqljs';
 import { Generator } from 'sparqljs';
+import { logger } from '../logging/logger';
 import type { ValueTransformerCsvMap } from '../valuetransformer/ValueTransformerCsvMap';
 import type { TermCallback } from './../utils/SyntaxTreeUtils';
 import { recurseExpression, recursePatterns } from './../utils/SyntaxTreeUtils';
@@ -17,6 +19,7 @@ export class QueryNextInstantiatorValue {
   protected DF = new DataFactory();
 
   protected QLever: QLeverInstance;
+  protected readonly log: Logger;
 
   public constructor(args: IQueryNextInstantiatorValueArgs) {
     this.termMappingTransformerFragmentedToOrginal = args.termMappingTransformerFragmentedToOriginal;
@@ -24,6 +27,7 @@ export class QueryNextInstantiatorValue {
     this.transformers = args.transformers;
 
     this.QLever = args.QLever;
+    this.log = logger.child({ module: 'QueryNextInstantiatorValue' });
   }
 
   /**
@@ -44,7 +48,7 @@ export class QueryNextInstantiatorValue {
     const { message, results, joinPlan } = await this.QLever.executeQuery(new Generator().stringify(transformedQuery));
 
     if (message === 'TIMEOUT') {
-      console.log('Query timed out.');
+      this.log.warn('Query timed out.');
     }
 
     let fragmentedJoinPlan: IJoinTreeNode | undefined;

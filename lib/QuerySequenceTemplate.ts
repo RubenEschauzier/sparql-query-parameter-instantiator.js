@@ -93,15 +93,16 @@ export class QuerySequenceTemplate {
       // Map config representation of target of substitution to a RDF.Variable object
       if (pattern.type === 'SUB' && !this.isVariable(pattern.target)) {
         pattern.target = <RDF.Variable> this.toTermNoLiteral(pattern.target);
+      } else if (pattern.type === 'FILTER') {
+        pattern.target = pattern.target.map(expression => this.normalizeRefinementExpression(expression));
       } else if (pattern.type === 'UNION') {
         pattern.target = [
           pattern.target[0].map(triple => this.targetToTriple(triple)),
           pattern.target[1].map(triple => this.targetToTriple(triple)),
         ];
-      } else if (pattern.type !== 'FILTER' && pattern.type !== 'SUB') {
+      } else if (pattern.type !== 'SUB') {
         pattern.target = pattern.target.map(triple => this.targetToTriple(triple));
       }
-      // Filters don't need mapping, as no functions are defined in the object interface.
       return pattern;
     });
     this.minRefinementLength = minRefinementLength;
@@ -1070,11 +1071,15 @@ export class QuerySequenceTemplate {
   }
 
   private toTerm(value: ITargetTriplePatternTerm): RDF.Variable | RDF.NamedNode | RDF.Literal {
-    if (value.termType === 'variable') {
+    const termType = value.termType;
+    if (termType === 'variable') {
       return this.DF.variable(value.value);
     }
-    if (value.termType === 'namedNode') {
+    if (termType === 'namedNode') {
       return this.DF.namedNode(value.value);
+    }
+    if (value.datatype && typeof value.datatype === 'string') {
+      return this.DF.literal(value.value, this.DF.namedNode(value.datatype));
     }
     return this.DF.literal(value.value);
   }
@@ -1085,6 +1090,48 @@ export class QuerySequenceTemplate {
       return this.DF.variable(value.value);
     }
     return this.DF.namedNode(value.value);
+  }
+
+  private normalizeRefinementExpression(expression: Expression): Expression {
+    return <Expression> this.normalizeRefinementExpressionValue(expression);
+  }
+
+  private normalizeRefinementExpressionValue(value: unknown): unknown {
+    if (Array.isArray(value)) {
+      return value.map(item => this.normalizeRefinementExpressionValue(item));
+    }
+    if (!value || typeof value !== 'object') {
+      return value;
+    }
+    if (this.isTargetTriplePatternTerm(value)) {
+      return this.toTerm(value);
+    }
+    if ('type' in value && (<{ type: unknown }> value).type === 'functionCall') {
+      return {
+        ...value,
+        type: 'operation',
+        args: this.normalizeRefinementExpressionValue((<{ args?: unknown }> value).args),
+      };
+    }
+    return Object.fromEntries(
+      Object.entries(<Record<string, unknown>> value)
+        .map(([ key, subValue ]) => [ key, this.normalizeRefinementExpressionValue(subValue) ]),
+    );
+  }
+
+  private isTargetTriplePatternTerm(value: unknown): value is ITargetTriplePatternTerm {
+    if (!value || typeof value !== 'object') {
+      return false;
+    }
+    if (!('termType' in value) || !('value' in value)) {
+      return false;
+    }
+    const termType = (<{ termType: unknown }> value).termType;
+    const termValue = (<{ value: unknown }> value).value;
+    if (typeof termType !== 'string' || typeof termValue !== 'string') {
+      return false;
+    }
+    return termType === 'variable' || termType === 'namedNode' || termType === 'literal';
   }
 
   private tripleEquals(a: Triple, b: Triple): boolean {

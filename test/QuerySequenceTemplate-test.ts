@@ -5,6 +5,7 @@ import { Generator, Parser } from 'sparqljs';
 import type { IOperatorState, IRefinementState } from '../lib/QuerySequenceTemplate';
 import { QuerySequenceTemplate } from '../lib/QuerySequenceTemplate';
 import type { IQueryRefinementPattern, ISubRefinementPattern } from '../lib/QuerySequenceTemplateProvider';
+import { extractExpressionPerOperator, extractTriplePatternsPerOperator } from '../lib/utils/RefinementSequenceUtils';
 
 const seedrandomFn = require('seedrandom');
 
@@ -39,6 +40,8 @@ describe('QueryTemplate', () => {
       template = new QuerySequenceTemplate(
         new Parser().parse(queryString),
         { s: [ DF.namedNode('ex:s1') ]},
+        {},
+        {},
         {},
         rng,
         2,
@@ -2454,6 +2457,75 @@ describe('QueryTemplate', () => {
         ],
       );
     });
+    it('should parse and apply a functionCall regex FILTER removal refinement pattern', () => {
+      const queryString = `SELECT * WHERE {
+                ?moderator <snvoc:firstName> ?firstName .
+                FILTER(regex(
+                  ?firstName,
+                  "^[A-E]"^^<http://www.w3.org/2001/XMLSchema#string>,
+                  "i"^^<http://www.w3.org/2001/XMLSchema#string>
+                ))
+            }`;
+      const refinementPattern = <IQueryRefinementPattern> <unknown> {
+        type: 'FILTER',
+        id: 7,
+        operation: 'removal',
+        description:
+          'Add case-insensitive regex filter to select moderators' +
+          ' with first names starting from A to E (P.1)',
+        location: 0,
+        target: [
+          {
+            type: 'functionCall',
+            operator: 'regex',
+            args: [
+              { termType: 'variable', value: 'firstName' },
+              {
+                termType: 'literal',
+                datatype: 'http://www.w3.org/2001/XMLSchema#string',
+                value: '^[A-E]',
+              },
+              {
+                termType: 'literal',
+                datatype: 'http://www.w3.org/2001/XMLSchema#string',
+                value: 'i',
+              },
+            ],
+          },
+        ],
+      };
+
+      const input = createRefinementInput(queryString, {}, {}, refinementPattern, jest.fn().mockReturnValue(0));
+      const operatorTriples = extractTriplePatternsPerOperator(input.query.where!);
+      const operatorExpressions: Record<string, Expression[][]> = {};
+      extractExpressionPerOperator(input.query.where!, operatorExpressions, 'filter');
+      const refinementState: IRefinementState = {
+        stateFilter: createOperatorState(),
+        stateQuery: createOperatorState(),
+        stateOptional: createOperatorState(),
+        stateUnion: createOperatorState(),
+        stateSubstitution: {},
+      };
+      const validPatterns = input.template.findValidRefinementPatterns(
+        operatorTriples,
+        operatorExpressions,
+        [ refinementPattern ],
+        refinementState,
+        {},
+      );
+      expect(validPatterns).toHaveLength(1);
+
+      const refined = input.template.applyRefinementPattern(
+        refinementPattern,
+        input.query,
+        {},
+        {},
+        refinementState,
+      );
+      const refinedQuery = new Generator().stringify(refined);
+      expect(refinedQuery).not.toContain('FILTER(');
+      expect(refinedQuery).toContain('?moderator <snvoc:firstName> ?firstName.');
+    });
     it('should correctly create sequence for optional', () => {
       const queryString = `SELECT * WHERE {
                 ?s ?p ?o .
@@ -2707,7 +2779,9 @@ describe('QueryTemplate', () => {
  * @param query Query string
  * @param variableMappings Mapping variable names to potential values, only first will be picked for
  * instantiation
+ * @param variableMappingsAlternative Mapping variable names to potential alternative values
  * @param refinementPattern The refinement pattern used to create alternative version of query
+ * @param rngParam Optional RNG override
  * @returns input data required to apply refinement
  */
 function createRefinementInput(
@@ -2721,9 +2795,12 @@ function createRefinementInput(
     new Parser().parse(query),
     variableMappings,
     {},
+    {},
+    {},
     rngParam ?? rng,
     2,
     5,
+    undefined,
     [ refinementPattern ],
   );
 
@@ -2739,7 +2816,10 @@ function createRefinementInput(
       .map(([ key, arr ]) => [ key, arr[0] ]),
   );
 
-  const syntaxTreeQuery: SelectQuery = template.instantiateSyntaxTree(new Parser().parse(query), singleVariableMapping);
+  const syntaxTreeQuery: SelectQuery = template.instantiateSyntaxTreeWrap(
+    new Parser().parse(query),
+    singleVariableMapping,
+  );
   return {
     query: syntaxTreeQuery,
     variableMapping: singleVariableMapping,
