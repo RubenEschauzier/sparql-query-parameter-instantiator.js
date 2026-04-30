@@ -449,7 +449,7 @@ export class QuerySequenceTemplate {
           let toRefineUnionLeft: BgpPattern;
           let toRefineUnionRight: BgpPattern;
           if (!groupPattern || groupPattern.length === 0) {
-            // If no UNIONs are present, add a new optional pattern
+            // If no UNIONs are present, add a new union pattern
             const leftUnion: BgpPattern = { type: 'bgp', triples: []};
             const rightUnion: BgpPattern = { type: 'bgp', triples: []};
 
