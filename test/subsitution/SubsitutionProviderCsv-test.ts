@@ -64,4 +64,19 @@ a3,b3,c3`;
       });
     });
   });
+
+  describe('for a CSV file with a custom separator', () => {
+    beforeEach(() => {
+      provider = new SubstitutionProviderCsv('file-semicolon.csv', 'col2', ';');
+      files['file-semicolon.csv'] = `col1;col2;col3
+a1;b1;c1
+a2;b2;c2`;
+    });
+
+    describe('getValues', () => {
+      it('should return the rows of the configured column using the custom separator', async() => {
+        await expect(provider.getValues()).resolves.toEqual([ 'b1', 'b2' ]);
+      });
+    });
+  });
 });

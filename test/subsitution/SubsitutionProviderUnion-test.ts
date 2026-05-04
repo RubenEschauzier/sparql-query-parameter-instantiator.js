@@ -29,4 +29,31 @@ describe('SubstitutionProviderUnion', () => {
       });
     });
   });
+
+  describe('for a single subprovider', () => {
+    beforeEach(() => {
+      subprovider1 = {
+        getValues: jest.fn(async() => [ 'x1', 'x2', 'x3' ]),
+      };
+      provider = new SubstitutionProviderUnion([ subprovider1 ]);
+    });
+
+    describe('getValues', () => {
+      it('should return the values of that provider', async() => {
+        await expect(provider.getValues()).resolves.toEqual([ 'x1', 'x2', 'x3' ]);
+      });
+    });
+  });
+
+  describe('for an empty list of subproviders', () => {
+    beforeEach(() => {
+      provider = new SubstitutionProviderUnion([]);
+    });
+
+    describe('getValues', () => {
+      it('should return an empty array', async() => {
+        await expect(provider.getValues()).resolves.toEqual([]);
+      });
+    });
+  });
 });

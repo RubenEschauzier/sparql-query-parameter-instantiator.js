@@ -275,6 +275,52 @@ GROUP BY ?s`, { x: [ DF.namedNode('ex:s1') ]}, 0))
         .toBe(`SELECT ?s WHERE { ?s ?p ?o. }
 GROUP BY ?s`);
     });
+
+    it('should handle GROUP BY with a substituted variable', () => {
+      expect(instantiate(`
+SELECT ?p (COUNT(?o) AS ?cnt) WHERE { ?s ?p ?o. }
+GROUP BY ?s ?p`, { s: [ DF.namedNode('ex:s1') ]}, 0))
+        .toBe(`SELECT ?p (COUNT(?o) AS ?cnt) WHERE { <ex:s1> ?p ?o. }
+GROUP BY <ex:s1> ?p`);
+    });
+
+    it('should handle OPTIONAL', () => {
+      expect(instantiate(`
+SELECT * WHERE {
+  ?s ?p ?o.
+  OPTIONAL {
+    ?s <ex:p2> ?x.
+  }
+}`, { x: [ DF.namedNode('ex:x1') ]}, 0))
+        .toBe(`SELECT * WHERE {
+  ?s ?p ?o.
+  OPTIONAL { ?s <ex:p2> <ex:x1>. }
+}`);
+    });
+
+    it('should handle MINUS', () => {
+      expect(instantiate(`
+SELECT * WHERE {
+  ?s ?p ?o.
+  MINUS {
+    ?x ?p ?o.
+  }
+}`, { x: [ DF.namedNode('ex:x1') ]}, 0))
+        .toBe(`SELECT * WHERE {
+  ?s ?p ?o.
+  MINUS { <ex:x1> ?p ?o. }
+}`);
+    });
+
+    it('should handle SERVICE', () => {
+      expect(instantiate(`
+SELECT * WHERE {
+  SERVICE <ex:service> {
+    ?x ?p ?o.
+  }
+}`, { x: [ DF.namedNode('ex:x1') ]}, 0))
+        .toBe(`SELECT * WHERE { SERVICE <ex:service> { <ex:x1> ?p ?o. } }`);
+    });
   });
 });
 

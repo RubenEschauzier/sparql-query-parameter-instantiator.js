@@ -118,5 +118,24 @@ SELECT * WHERE {
   <ex:c3> <ex:p> ?var2.
 }`);
     });
+
+    it('should produce an empty file when count is 0', async() => {
+      files.template1 = `SELECT * WHERE { ?var1 a <ex:o1>. }`;
+      files.template2 = `SELECT * WHERE { ?var3 <ex:p> ?var2. }`;
+
+      const zeroCountInstantiator = new QueryInstantiator(providers, 0);
+      await zeroCountInstantiator.instantiate();
+
+      expect(filesOut.destination1).toBe('');
+      expect(filesOut.destination2).toBe('');
+    });
+
+    it('should succeed with an empty providers list', async() => {
+      const emptyInstantiator = new QueryInstantiator([], 3);
+      await emptyInstantiator.instantiate();
+
+      // No files written
+      expect(Object.keys(filesOut)).toHaveLength(0);
+    });
   });
 });
